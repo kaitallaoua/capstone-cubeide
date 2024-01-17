@@ -22,7 +22,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -64,7 +64,17 @@ static void MX_SPI1_Init(void);
 void StartDefaultTask(void *argument);
 
 /* USER CODE BEGIN PFP */
+#ifdef __GNUC__
+#define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
+#else
+#define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
+#endif
 
+PUTCHAR_PROTOTYPE
+{
+  HAL_UART_Transmit(&huart1, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
+  return ch;
+}
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -312,8 +322,9 @@ void StartDefaultTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
-	  uint8_t Test[] = "Hello World !!!\r\n"; //Data to send
-	  HAL_UART_Transmit(&huart1,Test,sizeof(Test),1);// Sending in normal mode
+	  //uint8_t Test[] = "Hello World !!!\r\n"; //Data to send
+	  //HAL_UART_Transmit(&huart1,Test,sizeof(Test),1);// Sending in normal mode
+	  printf("hello %d\r\n", 7);
     osDelay(1000);
   }
   /* USER CODE END 5 */

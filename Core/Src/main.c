@@ -222,11 +222,11 @@ static void MX_SPI1_Init(void)
   hspi1.Instance = SPI1;
   hspi1.Init.Mode = SPI_MODE_MASTER;
   hspi1.Init.Direction = SPI_DIRECTION_2LINES_RXONLY;
-  hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
+  hspi1.Init.DataSize = SPI_DATASIZE_16BIT;
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
-  hspi1.Init.NSS = SPI_NSS_HARD_OUTPUT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+  hspi1.Init.NSS = SPI_NSS_SOFT;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_128;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -291,11 +291,21 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(CS_GPIO_Port, CS_Pin, GPIO_PIN_SET);
+
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : CS_Pin */
+  GPIO_InitStruct.Pin = CS_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+  HAL_GPIO_Init(CS_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI15_10_IRQn, 5, 0);
@@ -320,12 +330,44 @@ void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN 5 */
   /* Infinite loop */
+	//uint8_t spi_rx_buff_0;
+	//uint8_t spi_rx_buff_1;
+	uint16_t spi_rx_buff;
+	uint16_t adc_reading;
+	uint8_t sb;
+
+  // do not activate mcp
+  HAL_GPIO_WritePin(CS_GPIO_Port, CS_Pin, GPIO_PIN_SET);
   for(;;)
   {
-	  //uint8_t Test[] = "Hello World !!!\r\n"; //Data to send
-	  //HAL_UART_Transmit(&huart1,Test,sizeof(Test),1);// Sending in normal mode
-	  printf("hello %d\r\n", 7);
-    osDelay(1000);
+	  HAL_GPIO_WritePin(CS_GPIO_Port, CS_Pin, GPIO_PIN_RESET);
+	  //HAL_SPI_Receive(&hspi1, &spi_rx_buff_0, 1, 200);
+
+	  //HAL_SPI_Receive(&hspi1,  &spi_rx_buff_1, 1, 200);
+
+	  HAL_SPI_Receive(&hspi1,  &spi_rx_buff, 1, 200);
+	  HAL_GPIO_WritePin(CS_GPIO_Port, CS_Pin, GPIO_PIN_SET);
+
+	  printf("frame 0: %u\r\n", spi_rx_buff);
+
+	  //sb = ((1<<12) & spi_rx_buff)
+
+
+	  /*
+
+	  sb = ( (1 << 5) & spi_rx_buff_0 ) >> 4;
+
+	  adc_reading = ((0xF & spi_rx_buff_0) << 7) | (spi_rx_buff_1);
+
+	  printf("-------------------------------\r\n");
+	  printf("frame 0: %u\r\n", spi_rx_buff_0);
+	  printf("frame 1: %u\r\n", spi_rx_buff_1);
+
+	  printf("sb: %u\r\n", sb);
+	  printf("reading: %u\r\n", adc_reading);
+	  */
+
+    osDelay(250);
   }
   /* USER CODE END 5 */
 }

@@ -79,7 +79,175 @@ PUTCHAR_PROTOTYPE
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+void select_adc_channel(int channel)
+{
+    ADC_ChannelConfTypeDef sConfig = {0};
+    //sConfig.SamplingTime = ADC_SAMPLETIME_15CYCLES;
+    sConfig.SamplingTime = ADC_SAMPLETIME_7CYCLES_5;
+    switch (channel)
+    {
+        case 0:
+            sConfig.Channel = ADC_CHANNEL_0;
+              sConfig.Rank = 1;
 
+              if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+              {
+                Error_Handler();
+              }
+              break;
+
+        case 1:
+              /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+              */
+              sConfig.Channel = ADC_CHANNEL_1;
+              sConfig.Rank = 1;
+              if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+              {
+                Error_Handler();
+              }
+              break;
+              /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+              */
+        case 2:
+              sConfig.Channel = ADC_CHANNEL_2;
+              sConfig.Rank = 1;
+              if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+              {
+                Error_Handler();
+              }
+              break;
+              /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+              */
+        case 3:
+              sConfig.Channel = ADC_CHANNEL_3;
+              sConfig.Rank = 1;
+              if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+              {
+                Error_Handler();
+              }
+              break;
+              /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+              */
+        case 4:
+              sConfig.Channel = ADC_CHANNEL_4;
+              sConfig.Rank = 1;
+              if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+              {
+                Error_Handler();
+              }
+              break;
+              /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+              */
+        case 5:
+              sConfig.Channel = ADC_CHANNEL_5;
+              sConfig.Rank = 1;
+              if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+              {
+                Error_Handler();
+              }
+              break;
+              /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+              */
+        case 6:
+              sConfig.Channel = ADC_CHANNEL_6;
+              sConfig.Rank = 1;
+              if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+              {
+                Error_Handler();
+              }
+              break;
+              /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+              */
+        case 7:
+              sConfig.Channel = ADC_CHANNEL_7;
+              sConfig.Rank = 1;
+              if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+              {
+                Error_Handler();
+              }
+              break;
+              /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+              */
+        case 8:
+              sConfig.Channel = ADC_CHANNEL_8;
+              sConfig.Rank = 9;
+              if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+              {
+                Error_Handler();
+              }
+              break;
+              /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+              */
+        case 9:
+              sConfig.Channel = ADC_CHANNEL_9;
+              sConfig.Rank = 1;
+              if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+              {
+                Error_Handler();
+              }
+              break;
+              /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+              */
+        case 10:
+              sConfig.Channel = ADC_CHANNEL_10;
+              sConfig.Rank = 1;
+              if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+              {
+                Error_Handler();
+              }
+              break;
+              /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+              */
+        case 11:
+              sConfig.Channel = ADC_CHANNEL_11;
+              sConfig.Rank = 1;
+              if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+              {
+                Error_Handler();
+              }
+              break;
+              /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+              */
+        case 12:
+              sConfig.Channel = ADC_CHANNEL_12;
+              sConfig.Rank = 1;
+              if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+              {
+                Error_Handler();
+              }
+              break;
+              /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+              */
+        case 13:
+              sConfig.Channel = ADC_CHANNEL_13;
+              sConfig.Rank = 1;
+              if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+              {
+                Error_Handler();
+              }
+              break;
+              /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+              */
+        case 14:
+              sConfig.Channel = ADC_CHANNEL_14;
+              sConfig.Rank = 1;
+              if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+              {
+                Error_Handler();
+              }
+              break;
+        case 15:
+              sConfig.Channel = ADC_CHANNEL_15;
+              sConfig.Rank = 1;
+              if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+              {
+                Error_Handler();
+              }
+              break;
+        default:
+            break;
+    }
+}
 /* USER CODE END 0 */
 
 /**
@@ -231,12 +399,12 @@ static void MX_ADC1_Init(void)
   /** Common config
   */
   hadc1.Instance = ADC1;
-  hadc1.Init.ScanConvMode = ADC_SCAN_ENABLE;
+  hadc1.Init.ScanConvMode = ADC_SCAN_DISABLE;
   hadc1.Init.ContinuousConvMode = DISABLE;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-  hadc1.Init.NbrOfConversion = 16;
+  hadc1.Init.NbrOfConversion = 1;
   if (HAL_ADC_Init(&hadc1) != HAL_OK)
   {
     Error_Handler();
@@ -244,148 +412,13 @@ static void MX_ADC1_Init(void)
 
   /** Configure Regular Channel
   */
-  sConfig.Channel = ADC_CHANNEL_0;
-  sConfig.Rank = ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_7CYCLES_5;
-  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /** Configure Regular Channel
-  */
-  sConfig.Channel = ADC_CHANNEL_1;
-  sConfig.Rank = ADC_REGULAR_RANK_2;
-  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /** Configure Regular Channel
-  */
-  sConfig.Channel = ADC_CHANNEL_2;
-  sConfig.Rank = ADC_REGULAR_RANK_3;
-  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /** Configure Regular Channel
-  */
-  sConfig.Channel = ADC_CHANNEL_3;
-  sConfig.Rank = ADC_REGULAR_RANK_4;
-  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /** Configure Regular Channel
-  */
-  sConfig.Channel = ADC_CHANNEL_4;
-  sConfig.Rank = ADC_REGULAR_RANK_5;
-  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /** Configure Regular Channel
-  */
-  sConfig.Channel = ADC_CHANNEL_5;
-  sConfig.Rank = ADC_REGULAR_RANK_6;
-  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /** Configure Regular Channel
-  */
-  sConfig.Channel = ADC_CHANNEL_6;
-  sConfig.Rank = ADC_REGULAR_RANK_7;
-  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /** Configure Regular Channel
-  */
-  sConfig.Channel = ADC_CHANNEL_7;
-  sConfig.Rank = ADC_REGULAR_RANK_8;
-  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /** Configure Regular Channel
-  */
-  sConfig.Channel = ADC_CHANNEL_8;
-  sConfig.Rank = ADC_REGULAR_RANK_9;
-  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /** Configure Regular Channel
-  */
-  sConfig.Channel = ADC_CHANNEL_9;
-  sConfig.Rank = ADC_REGULAR_RANK_10;
-  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /** Configure Regular Channel
-  */
-  sConfig.Channel = ADC_CHANNEL_10;
-  sConfig.Rank = ADC_REGULAR_RANK_11;
-  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /** Configure Regular Channel
-  */
-  sConfig.Channel = ADC_CHANNEL_11;
-  sConfig.Rank = ADC_REGULAR_RANK_12;
-  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /** Configure Regular Channel
-  */
-  sConfig.Channel = ADC_CHANNEL_12;
-  sConfig.Rank = ADC_REGULAR_RANK_13;
-  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /** Configure Regular Channel
-  */
-  sConfig.Channel = ADC_CHANNEL_13;
-  sConfig.Rank = ADC_REGULAR_RANK_14;
-  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /** Configure Regular Channel
-  */
-  sConfig.Channel = ADC_CHANNEL_14;
-  sConfig.Rank = ADC_REGULAR_RANK_15;
-  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /** Configure Regular Channel
-  */
-  sConfig.Channel = ADC_CHANNEL_15;
-  sConfig.Rank = ADC_REGULAR_RANK_16;
-  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
+//  sConfig.Channel = ADC_CHANNEL_0;
+//  sConfig.Rank = ADC_REGULAR_RANK_1;
+//  sConfig.SamplingTime = ADC_SAMPLETIME_7CYCLES_5;
+//  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+//  {
+//    Error_Handler();
+//  }
   /* USER CODE BEGIN ADC1_Init 2 */
 
   /* USER CODE END ADC1_Init 2 */
@@ -460,24 +493,30 @@ void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN 5 */
   /* Infinite loop */
+  //uint32_t channel_val[16];
 	uint32_t channel_val;
   for(;;)
   {
 
 
+	  // ch 2,3 dont work
+
+	  // ch 7 works
+	   // ch8 coupled to 7, reads nothing when shorted on its own
 
 
-	  // Get each ADC value from the group (2 channels in this case)
 	  printf("-------------------------------\r\n");
 	  for (uint16_t i = 0; i < 16; i++) {
+
+		    select_adc_channel(i);
+		  // Get each ADC value from the group (2 channels in this case)
 		  HAL_ADC_Start(&hadc1);
 		  // Wait for regular group conversion to be completed
-		  //HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
-		  HAL_Delay(1);
+		  HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
 		  channel_val = HAL_ADC_GetValue(&hadc1);
 
 		  printf("ADC channel [%u] value: %u\r\n", i, channel_val);
-		  HAL_ADC_Stop(&hadc1);
+		  //HAL_ADC_Stop(&hadc1);
 	  }
 
 

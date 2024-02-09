@@ -25,6 +25,7 @@
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include "sdcard.h"
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -544,8 +545,6 @@ static void MX_GPIO_Init(void)
 void StartDefaultTask(void const * argument)
 {
   /* USER CODE BEGIN 5 */
-  /* Infinite loop */
-  //uint32_t channel_val[16];
 
 	  //Open the file system
 	  fres = f_mount(&FatFs, "", 1); //1=mount now
@@ -553,7 +552,7 @@ void StartDefaultTask(void const * argument)
 	  printf("just after mount");
 	  if (fres != FR_OK) {
 		printf("f_mount error (%i)\r\n", fres);
-		while(1);
+		Error_Handler();
 	  }
 
 	  printf("mounted");
@@ -561,7 +560,7 @@ void StartDefaultTask(void const * argument)
 	  fres = f_getfree("", &free_clusters, &getFreeFs);
 	  if (fres != FR_OK) {
 		printf("f_getfree error (%i)\r\n", fres);
-		while(1);
+		Error_Handler();
 	  }
 
 	  //Formula comes from ChaN's documentation
@@ -573,8 +572,8 @@ void StartDefaultTask(void const * argument)
 	  //Now let's try to open file "test.txt"
 	  fres = f_open(&fil, "test.txt", FA_READ);
 	  if (fres != FR_OK) {
-		printf("f_open error (%i)\r\n");
-		while(1);
+		printf("f_open error (%i)\r\n", fres);
+		Error_Handler();
 	  }
 	  printf("I was able to open 'test.txt' for reading!\r\n");
 
@@ -601,12 +600,14 @@ void StartDefaultTask(void const * argument)
 	  }
 
 	  //Copy in a string
-	  strncpy((char*)readBuf, "a new file is made!", 19);
+	  char* mystr = "a new file is made!";
+
+	  strncpy((char*)readBuf, mystr, strlen(mystr));
 	  fres = f_write(&fil, readBuf, 19, &bytesWrote);
 	  if(fres == FR_OK) {
 		printf("Wrote %i bytes to 'write.txt'!\r\n", bytesWrote);
 	  } else {
-		printf("f_write error (%i)\r\n");
+		printf("f_write error (%i)\r\n", fres);
 	  }
 
 	  //Be a tidy kiwi - don't forget to close your file!
@@ -683,6 +684,8 @@ void Error_Handler(void)
   __disable_irq();
   while (1)
   {
+	  printf("Bricked");
+	  HAL_Delay(1000);
   }
   /* USER CODE END Error_Handler_Debug */
 }

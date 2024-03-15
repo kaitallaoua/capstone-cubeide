@@ -100,7 +100,7 @@ void open_sdcard_file_write(char* filename) {
 	while(1){
 		// append i to filename
 
-		snprintf(buf, 20, "%s_%u.txt", filename, i);
+		snprintf(buf, 20, "%s_%lu.csv", filename, i);
 		_filename = buf;
 
 		printf("try filename: %s\r\n", _filename);

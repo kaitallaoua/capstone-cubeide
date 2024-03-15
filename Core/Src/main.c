@@ -674,12 +674,11 @@ void StartDefaultTask(void const * argument)
 
 	//char* mystr = "a new file is made!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
 	//write_sdcard_file(mystr);
+	write_sdcard_file("vref_noshd,vref_mel,vref_al\r\n");
 
 
-
-
-uint32_t channel_val;
-const uint32_t num_samples = 5;
+	uint32_t channel_val;
+	const uint32_t num_samples = 400; // 2sec 400 samples = 13.6m
 
 
   for(int cnt = 0; cnt < num_samples; cnt++)
@@ -693,26 +692,37 @@ const uint32_t num_samples = 5;
 	  printf("-------------------------------\r\n");
 	  for (uint16_t i = 0; i < 16; i++) {
 
-		    select_adc_channel(i);
-		  // Get each ADC value from the group (2 channels in this case)
-		  HAL_ADC_Start(&hadc1);
-		  // Wait for regular group conversion to be completed
-		  HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
-		  channel_val = HAL_ADC_GetValue(&hadc1);
 
-		  printf("ADC channel [%u] value: %u\r\n", (uint16_t) i, (uint16_t) channel_val);
+		  // only check for vref
+		  if (i == 4 || i == 5 || i == 6) {
+
+			  select_adc_channel(i);
+			  // Get each ADC value from the group (2 channels in this case)
+			  HAL_ADC_Start(&hadc1);
+			  // Wait for regular group conversion to be completed
+			  HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
+			  channel_val = HAL_ADC_GetValue(&hadc1);
+
+			  printf("ADC channel [%u] value: %u\r\n", (uint16_t) i, (uint16_t) channel_val);
 
 
-		  // sd card
-		  snprintf(adc_buf, 40, "ADC channel [%u] value: %u\r\n", (uint16_t) i, (uint16_t) channel_val);
-		  write_sdcard_file("------------------------");
-		  write_sdcard_file(adc_buf);
+			  // sd card
+			  //snprintf(adc_buf, 40, "ADC channel [%u] value: %u\r\n", (uint16_t) i, (uint16_t) channel_val);
+			  if (i == 4 || i == 5) {
+				  snprintf(adc_buf, 40, "%u,", (uint16_t) channel_val);
+				  write_sdcard_file(adc_buf);
+			  } else {
+				  snprintf(adc_buf, 40, "%u\r\n", (uint16_t) channel_val);
+				  write_sdcard_file(adc_buf);
+
+			  }
+		  }
 
 	  }
 
 
 
-    osDelay(1000);
+    osDelay(2000);
   }
 
 //	uint8_t buf[4];

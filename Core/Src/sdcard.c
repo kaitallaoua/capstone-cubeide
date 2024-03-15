@@ -92,15 +92,29 @@ void close_sdcard_file(void) {
 }
 
 void open_sdcard_file_write(char* filename) {
-	  //Now let's try and write a file "write.txt"
-		_filename = filename;
-	  fres = f_open(&fil, filename, FA_WRITE | FA_OPEN_ALWAYS | FA_CREATE_ALWAYS);
+
+	// lots of checks to do here...
+	char buf[20];
+	// append incremented number to filename
+	uint32_t i = 0;
+	while(1){
+		// append i to filename
+
+		snprintf(buf, 20, "%s_%u.txt", filename, i);
+		_filename = buf;
+
+		printf("try filename: %s\r\n", _filename);
+
+
+	  fres = f_open(&fil, _filename, FA_WRITE | FA_CREATE_NEW | FA_OPEN_EXISTING);
 	  if(fres == FR_OK) {
 		printf("'%s' successful open for write\r\n", _filename);
-	  } else {
+		return;
+	  } else if (fres == FR_EXIST){
 		printf("f_open error (%i)\r\n", fres);
+		i++;
 	  }
-
+	}
 }
 
 void write_sdcard_file(char* to_write) {
@@ -116,7 +130,7 @@ void write_sdcard_file(char* to_write) {
 	  strncpy((char*)working_buff, to_write, str_size);
 	  fres = f_write(&fil, working_buff, str_size, &bytesWrote);
 	  if(fres == FR_OK) {
-		printf("Wrote %i bytes to 'write.txt'!\r\n", bytesWrote);
+		printf("Wrote %i bytes to the file!\r\n", bytesWrote);
 	  } else {
 		printf("f_write error (%i)\r\n", fres);
 	  }

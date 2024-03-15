@@ -46,6 +46,8 @@
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
 
+I2C_HandleTypeDef hi2c1;
+
 SPI_HandleTypeDef hspi2;
 
 TIM_HandleTypeDef htim3;
@@ -64,6 +66,7 @@ static void MX_USART1_UART_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_SPI2_Init(void);
 static void MX_TIM3_Init(void);
+static void MX_I2C1_Init(void);
 void StartDefaultTask(void const * argument);
 
 /* USER CODE BEGIN PFP */
@@ -286,13 +289,16 @@ int main(void)
   MX_SPI2_Init();
   MX_FATFS_Init();
   MX_TIM3_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
 
 
   //a short delay is important to let the SD card settle
   HAL_Delay(1000);
 
- // HAL_I2C_EnableListen_IT(&hi2c1);
+
+  // obc enable interrupt listen
+  HAL_I2C_EnableListen_IT(&hi2c1);
 
   /* USER CODE END 2 */
 
@@ -428,6 +434,40 @@ static void MX_ADC1_Init(void)
   /* USER CODE BEGIN ADC1_Init 2 */
 
   /* USER CODE END ADC1_Init 2 */
+
+}
+
+/**
+  * @brief I2C1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_I2C1_Init(void)
+{
+
+  /* USER CODE BEGIN I2C1_Init 0 */
+
+  /* USER CODE END I2C1_Init 0 */
+
+  /* USER CODE BEGIN I2C1_Init 1 */
+
+  /* USER CODE END I2C1_Init 1 */
+  hi2c1.Instance = I2C1;
+  hi2c1.Init.ClockSpeed = 100000;
+  hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
+  hi2c1.Init.OwnAddress1 = 36;
+  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c1.Init.OwnAddress2 = 0;
+  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN I2C1_Init 2 */
+
+  /* USER CODE END I2C1_Init 2 */
 
 }
 
@@ -616,34 +656,33 @@ static void MX_GPIO_Init(void)
 void StartDefaultTask(void const * argument)
 {
   /* USER CODE BEGIN 5 */
-	/*
+
+	char adc_buf[40];
+
 	mount_sdcard();
 
 	print_sdcard_stats();
 
-	open_sdcard_file_read("test.txt");
+	//open_sdcard_file_read("test.txt");
 
-	read_sdcard_file();
+	//read_sdcard_file();
 
-	close_sdcard_file();
-
-
-	open_sdcard_file_write("1234.txt");
-
-	char* mystr = "a new file is made!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
-	write_sdcard_file(mystr);
+	//close_sdcard_file();
 
 
+	open_sdcard_file_write("sample");
 
-	close_sdcard_file();
+	//char* mystr = "a new file is made!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
+	//write_sdcard_file(mystr);
 
 
-	unmount_sdcard();
 
-*/
-/*
-	uint32_t channel_val;
-  for(;;)
+
+uint32_t channel_val;
+const uint32_t num_samples = 5;
+
+
+  for(int cnt = 0; cnt < num_samples; cnt++)
   {
 
 
@@ -662,14 +701,20 @@ void StartDefaultTask(void const * argument)
 		  channel_val = HAL_ADC_GetValue(&hadc1);
 
 		  printf("ADC channel [%u] value: %u\r\n", (uint16_t) i, (uint16_t) channel_val);
-		  //HAL_ADC_Stop(&hadc1);
+
+
+		  // sd card
+		  snprintf(adc_buf, 40, "ADC channel [%u] value: %u\r\n", (uint16_t) i, (uint16_t) channel_val);
+		  write_sdcard_file("------------------------");
+		  write_sdcard_file(adc_buf);
+
 	  }
 
 
 
     osDelay(1000);
   }
-*/
+
 //	uint8_t buf[4];
 //	  HAL_StatusTypeDef ret;
 //
@@ -692,8 +737,12 @@ void StartDefaultTask(void const * argument)
 //	}
 
 
+  	printf("all done\r\n");
+
+	close_sdcard_file();
 
 
+	unmount_sdcard();
   /* USER CODE END 5 */
 }
 

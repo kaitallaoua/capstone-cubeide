@@ -657,6 +657,12 @@ void StartDefaultTask(void const * argument)
 {
   /* USER CODE BEGIN 5 */
 
+
+	// turn on +5v plane
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
+
+	printf("hello");
+
 	char adc_buf[40];
 
 	mount_sdcard();
@@ -674,11 +680,11 @@ void StartDefaultTask(void const * argument)
 
 	//char* mystr = "a new file is made!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
 	//write_sdcard_file(mystr);
-	write_sdcard_file("vref_noshd,vref_mel,vref_al\r\n");
+	write_sdcard_file("vref_noshd,vref_mel,vref_al,lm35\r\n");
 
 
 	uint32_t channel_val;
-	const uint32_t num_samples = 400; // 2sec 400 samples = 13.6m
+	const uint32_t num_samples = 5; // 2sec 400 samples = 13.6m
 
 
   for(int cnt = 0; cnt < num_samples; cnt++)
@@ -694,7 +700,7 @@ void StartDefaultTask(void const * argument)
 
 
 		  // only check for vref
-		  if (i == 4 || i == 5 || i == 6) {
+		  if (i == 4 || i == 5 || i == 6 || i == 9) {
 
 			  select_adc_channel(i);
 			  // Get each ADC value from the group (2 channels in this case)
@@ -708,7 +714,7 @@ void StartDefaultTask(void const * argument)
 
 			  // sd card
 			  //snprintf(adc_buf, 40, "ADC channel [%u] value: %u\r\n", (uint16_t) i, (uint16_t) channel_val);
-			  if (i == 4 || i == 5) {
+			  if (i == 4 || i == 5 || i == 6) {
 				  snprintf(adc_buf, 40, "%u,", (uint16_t) channel_val);
 				  write_sdcard_file(adc_buf);
 			  } else {

@@ -50,6 +50,7 @@ I2C_HandleTypeDef hi2c1;
 
 SPI_HandleTypeDef hspi2;
 
+TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim3;
 
 UART_HandleTypeDef huart1;
@@ -67,6 +68,7 @@ static void MX_ADC1_Init(void);
 static void MX_SPI2_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_I2C1_Init(void);
+static void MX_TIM1_Init(void);
 void StartDefaultTask(void const * argument);
 
 /* USER CODE BEGIN PFP */
@@ -85,6 +87,31 @@ PUTCHAR_PROTOTYPE
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+// https://controllerstech.com/create-1-microsecond-delay-stm32/
+void delay_us (uint16_t us)
+{
+	__HAL_TIM_SET_COUNTER(&htim1,0);  // set the counter value a 0
+	while (__HAL_TIM_GET_COUNTER(&htim1) < us);  // wait for the counter to reach the us input in the parameter
+}
+
+uint16_t max(uint16_t arr[], int len)
+{
+	uint16_t i;
+
+    // Initialize maximum element
+    uint16_t max = arr[0];
+
+    // Traverse array elements
+    // from second and compare
+    // every element with current max
+    for (i = 1; i < len; i++)
+        if (arr[i] > max)
+            max = arr[i];
+
+    return max;
+}
+
 void select_adc_channel(int channel)
 {
     ADC_ChannelConfTypeDef sConfig = {0};
@@ -254,6 +281,226 @@ void select_adc_channel(int channel)
             break;
     }
 }
+
+
+void turn_on_5v_plane(void) {
+	// turn on +5v plane
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
+}
+
+void turn_off_5v_plane(void) {
+
+	// turn off +5v plane
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_RESET);
+}
+
+
+void preform_opamp_measurement_log_to_sd(void) {
+	char adc_buf[15];
+
+	// dont need to convert to voltages here, since we divide at the end for gain
+
+	const uint16_t NUM_OF_SAMPLES = 80;
+
+	uint16_t source_sine_samples[NUM_OF_SAMPLES];
+	uint16_t peak_source_sine;
+
+	uint16_t test_sine_samples[NUM_OF_SAMPLES];
+	uint16_t peak_test_sine;
+
+	uint16_t noshd_gain; // percentage
+	uint16_t mel_gain;
+	uint16_t al_gain;
+
+	for (uint16_t i = 0; i <= 3; i++) {
+
+		 for (uint8_t j = 0; j < NUM_OF_SAMPLES; j++) {
+
+			  select_adc_channel(i);
+			  // Get each ADC value from the group (2 channels in this case)
+			  HAL_ADC_Start(&hadc1);
+			  // Wait for regular group conversion to be completed
+			  HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
+			  if (i == 0) {
+				  source_sine_samples[j] = HAL_ADC_GetValue(&hadc1);
+			  } else {
+				  test_sine_samples[j] = HAL_ADC_GetValue(&hadc1);
+			  }
+
+			  delay_us(80); // ~160 Hz sine wave, try to sample it evenly with 80 samples as 1/(160 Hz * 80) ~ 80us
+
+		 }
+
+		 switch (i) {
+		 	 case 0:
+		 		 peak_source_sine = max(source_sine_samples, NUM_OF_SAMPLES);
+		 		 printf("SINE source peak quantized: %u\r\n", peak_source_sine);
+		 		 break;
+		 	 case 1: // noshd
+		 		 peak_test_sine = max(test_sine_samples, NUM_OF_SAMPLES);
+
+		 		noshd_gain = (uint16_t) (( ((float) peak_test_sine) / ((float) peak_source_sine) ) * 100);
+		 		 printf("SINE noshd gain %%: %u\r\n", noshd_gain);
+
+
+		 		break;
+		 	 case 2:
+		 		 peak_test_sine = max(test_sine_samples, NUM_OF_SAMPLES);
+
+			 		mel_gain = (uint16_t) (( ((float) peak_test_sine) / ((float) peak_source_sine) ) * 100);
+			 		 printf("SINE mel gain %%: %u\r\n", mel_gain);
+		 		break;
+
+		 	 case 3:
+		 		 peak_test_sine = max(test_sine_samples, NUM_OF_SAMPLES);
+
+			 		al_gain = (uint16_t) (( ((float) peak_test_sine) / ((float) peak_source_sine) ) * 100);
+			 		 printf("SINE al gain %%: %u\r\n", al_gain);
+		 		break;
+
+		 }
+
+	}
+  snprintf(adc_buf, 15, "%u,%u,%u,", noshd_gain, mel_gain, al_gain);
+  write_sdcard_file(adc_buf);
+}
+
+
+void preform_vref_measurement_log_to_sd(void) {
+	char adc_buf[40];
+	uint16_t quantized_vref_val;
+
+	for (uint16_t i = 4; i <= 6; i++) {
+
+		  select_adc_channel(i);
+		  // Get each ADC value from the group (2 channels in this case)
+		  HAL_ADC_Start(&hadc1);
+		  // Wait for regular group conversion to be completed
+		  HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
+		  quantized_vref_val = HAL_ADC_GetValue(&hadc1);
+
+		  if (i == 4) { printf("VREF NOSHD quantized val: %u\r\n", quantized_vref_val);}
+		  if (i == 5) { printf("VREF MEL quantized val: %u\r\n", quantized_vref_val);}
+		  if (i == 6) { printf("VREF AL quantized val: %u\r\n", quantized_vref_val);}
+
+
+		  snprintf(adc_buf, 40, "%u,", quantized_vref_val);
+		  write_sdcard_file(adc_buf);
+
+	}
+
+}
+
+void read_lm35(void) {
+		char adc_buf[40];
+
+		uint16_t quantized_lm35_v;
+
+	  select_adc_channel(9);
+	  // Get each ADC value from the group (2 channels in this case)
+	  HAL_ADC_Start(&hadc1);
+	  // Wait for regular group conversion to be completed
+	  HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
+	  quantized_lm35_v = HAL_ADC_GetValue(&hadc1);
+
+	  printf("LM35 quantized volt: %u\r\n", quantized_lm35_v);
+	  snprintf(adc_buf, 40, "%u,", quantized_lm35_v);
+	  write_sdcard_file(adc_buf);
+}
+
+void preform_opto_measurement_log_to_sd(void) {
+	char adc_buf[15];
+
+	// dont need to convert to voltages here, since we divide at the end for gain
+
+	const uint16_t NUM_OF_SAMPLES = 80;
+
+	uint16_t forward_opto_current[NUM_OF_SAMPLES];
+	uint16_t peak_forward_opto_current;
+
+	uint16_t emitter_opto_current[NUM_OF_SAMPLES];
+	uint16_t peak_emitter_opto_current;
+
+	uint16_t noshd_ctr; // percentage
+	uint16_t mel_ctr;
+	uint16_t al_ctr;
+
+	for (uint16_t i = 10; i <= 15; i++) {
+
+		 for (uint8_t j = 0; j < NUM_OF_SAMPLES; j++) {
+
+			  select_adc_channel(i);
+			  // Get each ADC value from the group (2 channels in this case)
+			  HAL_ADC_Start(&hadc1);
+			  // Wait for regular group conversion to be completed
+			  HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
+
+			  // if adc channel number even
+			  // if moving channels around have to change that here
+			  if (i % 2 == 0) {
+				  // its forward
+				  forward_opto_current[j] = HAL_ADC_GetValue(&hadc1);
+			  } else {
+				  // else its emitter
+				  emitter_opto_current[j] = HAL_ADC_GetValue(&hadc1);
+			  }
+
+			  delay_us(80); // ~160 Hz sine wave, try to sample it evenly with 80 samples as 1/(160 Hz * 80) ~ 80us
+
+		 }
+
+		 switch (i) {
+		 	 case 10:
+		 		peak_forward_opto_current = max(forward_opto_current, NUM_OF_SAMPLES);
+		 		 printf("OPTO noshd forward current peak: %u\r\n", peak_forward_opto_current);
+		 		 break;
+		 	 case 11:
+		 		peak_emitter_opto_current = max(emitter_opto_current, NUM_OF_SAMPLES);
+		 		 printf("OPTO noshd emitter current peak: %u\r\n", peak_emitter_opto_current);
+
+		 		// now we have all noshd data, find ctr = emitter/forward * 50 for our resistor selection
+
+		 		noshd_ctr = (uint16_t) (( ((float) peak_emitter_opto_current) / ((float) peak_forward_opto_current) ) * 50);
+		 		 printf("OPTO noshd ctr %%: %u\r\n", noshd_ctr);
+
+		 		break;
+		 	 case 12:
+		 		peak_forward_opto_current = max(forward_opto_current, NUM_OF_SAMPLES);
+		 		 printf("OPTO mel forward current peak: %u\r\n", peak_forward_opto_current);
+		 		 break;
+		 	 case 13:
+		 		peak_emitter_opto_current = max(emitter_opto_current, NUM_OF_SAMPLES);
+		 		 printf("OPTO mel emitter current peak: %u\r\n", peak_emitter_opto_current);
+
+		 		// now we have all noshd data, find ctr = emitter/forward * 50 for our resistor selection
+
+		 		mel_ctr = (uint16_t) (( ((float) peak_emitter_opto_current) / ((float) peak_forward_opto_current) ) * 50);
+		 		 printf("OPTO mel ctr %%: %u\r\n", mel_ctr);
+
+		 		break;
+		 	 case 14:
+		 		peak_forward_opto_current = max(forward_opto_current, NUM_OF_SAMPLES);
+		 		 printf("OPTO al forward current peak: %u\r\n", peak_forward_opto_current);
+		 		 break;
+		 	 case 15:
+		 		peak_emitter_opto_current = max(emitter_opto_current, NUM_OF_SAMPLES);
+		 		 printf("OPTO al emitter current peak: %u\r\n", peak_emitter_opto_current);
+
+		 		// now we have all noshd data, find ctr = emitter/forward * 50 for our resistor selection
+
+		 		al_ctr = (uint16_t) (( ((float) peak_emitter_opto_current) / ((float) peak_forward_opto_current) ) * 50);
+		 		 printf("OPTO al ctr %%: %u\r\n", al_ctr);
+
+		 		break;
+		 }
+
+	}
+  snprintf(adc_buf, 15, "%u,%u,%u,", noshd_ctr, mel_ctr, al_ctr);
+  write_sdcard_file(adc_buf);
+}
+
+
+
 /* USER CODE END 0 */
 
 /**
@@ -290,15 +537,17 @@ int main(void)
   MX_FATFS_Init();
   MX_TIM3_Init();
   MX_I2C1_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
 
   //a short delay is important to let the SD card settle
   HAL_Delay(1000);
 
+  HAL_TIM_Base_Start(&htim1);
 
   // obc enable interrupt listen
-  HAL_I2C_EnableListen_IT(&hi2c1);
+  //HAL_I2C_EnableListen_IT(&hi2c1);
 
   /* USER CODE END 2 */
 
@@ -510,6 +759,52 @@ static void MX_SPI2_Init(void)
 }
 
 /**
+  * @brief TIM1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM1_Init(void)
+{
+
+  /* USER CODE BEGIN TIM1_Init 0 */
+
+  /* USER CODE END TIM1_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM1_Init 1 */
+
+  /* USER CODE END TIM1_Init 1 */
+  htim1.Instance = TIM1;
+  htim1.Init.Prescaler = 24-1;
+  htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim1.Init.Period = 65535;
+  htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim1.Init.RepetitionCounter = 0;
+  htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim1, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim1, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM1_Init 2 */
+
+  /* USER CODE END TIM1_Init 2 */
+
+}
+
+/**
   * @brief TIM3 Initialization Function
   * @param None
   * @retval None
@@ -657,108 +952,50 @@ void StartDefaultTask(void const * argument)
 {
   /* USER CODE BEGIN 5 */
 
+	turn_on_5v_plane();
 
-	// turn on +5v plane
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
 
-	printf("hello");
-
-	char adc_buf[40];
+	//--------------------------- start cycle
 
 	mount_sdcard();
-
 	print_sdcard_stats();
-
-	//open_sdcard_file_read("test.txt");
-
-	//read_sdcard_file();
-
-	//close_sdcard_file();
-
 
 	open_sdcard_file_write("sample");
 
-	//char* mystr = "a new file is made!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
-	//write_sdcard_file(mystr);
-	write_sdcard_file("vref_noshd,vref_mel,vref_al,lm35\r\n");
+	// may need to keep small or increase max size in write function if this gets too long
+	write_sdcard_file("op_noshd_p,op_mel_p,op_al_p,vref_noshd,vref_mel,vref_al,lm35,opto_noshd,opto_mel,opto_al\r\n");
+
+	const uint32_t num_samples = 450; // 2sec 450 samples = 15minutes
 
 
-	uint32_t channel_val;
-	const uint32_t num_samples = 5; // 2sec 400 samples = 13.6m
+	for(int cnt = 0; cnt < num_samples; cnt++)
+	{
 
+		// order is very important here, since it correlates to order of data written to csv
+		preform_opamp_measurement_log_to_sd();
+		printf("------------------------------\r\n");
+		preform_vref_measurement_log_to_sd();
+		printf("------------------------------\r\n");
+		read_lm35();
+		printf("------------------------------\r\n");
+		preform_opto_measurement_log_to_sd();
+		printf("------------------------------\r\n");
 
-  for(int cnt = 0; cnt < num_samples; cnt++)
-  {
+		// new row
+		write_sdcard_file("\r\n");
+		osDelay(2000);
+	}
 
-
-	  // ch 7 works
-	   // ch8 coupled to 7, reads nothing when shorted on its own
-
-
-	  printf("-------------------------------\r\n");
-	  for (uint16_t i = 0; i < 16; i++) {
-
-
-		  // only check for vref
-		  if (i == 4 || i == 5 || i == 6 || i == 9) {
-
-			  select_adc_channel(i);
-			  // Get each ADC value from the group (2 channels in this case)
-			  HAL_ADC_Start(&hadc1);
-			  // Wait for regular group conversion to be completed
-			  HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
-			  channel_val = HAL_ADC_GetValue(&hadc1);
-
-			  printf("ADC channel [%u] value: %u\r\n", (uint16_t) i, (uint16_t) channel_val);
-
-
-			  // sd card
-			  //snprintf(adc_buf, 40, "ADC channel [%u] value: %u\r\n", (uint16_t) i, (uint16_t) channel_val);
-			  if (i == 4 || i == 5 || i == 6) {
-				  snprintf(adc_buf, 40, "%u,", (uint16_t) channel_val);
-				  write_sdcard_file(adc_buf);
-			  } else {
-				  snprintf(adc_buf, 40, "%u\r\n", (uint16_t) channel_val);
-				  write_sdcard_file(adc_buf);
-
-			  }
-		  }
-
-	  }
-
-
-
-    osDelay(2000);
-  }
-
-//	uint8_t buf[4];
-//	  HAL_StatusTypeDef ret;
-//
-//
-//	while (1) {
-//
-//		ret = HAL_I2C_Slave_Receive(&hi2c1, buf, 4, HAL_MAX_DELAY);
-//
-//		if ( ret != HAL_OK ) {
-//		  printf("Error RX\r\n");
-//		} else {
-//			for (int i = 0; i < 4; i++) {
-//				printf("value: [%u]", buf[i]);
-//
-//			}
-//		}
-//
-//		osDelay(1000);
-//
-//	}
-
-
-  	printf("all done\r\n");
+	printf("all done\r\n");
 
 	close_sdcard_file();
 
-
+	// always do this after testing is done so if power is cut, no data is lost
 	unmount_sdcard();
+
+
+	//------------------------- end cycle
+
   /* USER CODE END 5 */
 }
 

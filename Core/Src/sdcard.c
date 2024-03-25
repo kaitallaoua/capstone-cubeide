@@ -113,6 +113,9 @@ void open_sdcard_file_write(char* filename) {
 	  } else if (fres == FR_EXIST){
 		printf("f_open error (%i)\r\n", fres);
 		i++;
+	  } else { // file may be corrupted, skip it
+			printf("unexpected file state, skipping (%i)\r\n", fres);
+			i++;
 	  }
 	}
 }

@@ -5,7 +5,7 @@
  *      Author: karim
  */
 #include "main.h"
-#include "cmsis_os.h"
+//#include "cmsis_os.h"
 #include "fatfs.h"
 #include <stdio.h>
 #include "sdcard.h"

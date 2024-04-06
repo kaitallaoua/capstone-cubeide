@@ -570,7 +570,10 @@ int main(void)
 		mount_sdcard();
 		print_sdcard_stats();
 
-		open_sdcard_file_write("sample");
+		// keep the filename as short as possible
+		// e.g. "sample" can only write 10 files before it doesnt want to make anymore
+		// this isa bug
+		open_sdcard_file_write("s");
 
 		// may need to keep small or increase max size in write function if this gets too long
 		write_sdcard_file("op_noshd_p,op_mel_p,op_al_p,vref_noshd,vref_mel,vref_al,lm35,opto_noshd,opto_mel,opto_al\r\n");
